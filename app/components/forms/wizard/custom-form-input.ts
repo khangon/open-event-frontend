@@ -5,7 +5,7 @@ import { inject as service } from '@ember/service';
 import DS from 'ember-data';
 import { tracked } from '@glimmer/tracking';
 
-interface CustomForm { fieldIdentifier: string, name: string, type: string, formIdentifier: string}
+interface CustomForm { fieldIdentifier: string, name: string, type: string, formIdentifier: string, min: number, max: number}
 
 function getIdentifier(name: string, fields: CustomForm[]): string {
   const fieldIdentifiers = new Set(fields.map(field => field.fieldIdentifier));
@@ -23,6 +23,8 @@ interface Args {
   form: string,
   event: any,
   formIdentifier: string | '',
+  min: number | 0,
+  max: number | 10,
   onSave: (() => void) | null
 }
 
@@ -30,6 +32,12 @@ export default class CustomFormInput extends Component<Args> {
 
   @tracked
   name = '';
+
+  @tracked
+  min = 0;
+
+  @tracked
+  max = 10;
 
   @tracked
   type = 'text';
@@ -42,8 +50,12 @@ export default class CustomFormInput extends Component<Args> {
     if (this.args.field) {
       this.name = this.args.field.name;
       this.type = this.args.field.type;
+      this.min = this.args.field.min;
+      this.max = this.args.field.max;
     } else {
       this.name = '';
+      this.min = 0;
+      this.max = 10;
     }
   }
 
@@ -59,6 +71,9 @@ export default class CustomFormInput extends Component<Args> {
 
   @computed('name', 'type')
   get field(): CustomForm {
+
+
+    console.log('========================>', this.args)
     return this.store.createRecord('custom-form', {
       fieldIdentifier : this.identifier,
       name            : this.name,
@@ -68,7 +83,9 @@ export default class CustomFormInput extends Component<Args> {
       isIncluded      : false,
       isComplex       : true,
       event           : this.args.event,
-      formID          : this.args.formIdentifier
+      formID          : this.args.formIdentifier,
+      min             : this.min,
+      max             : this.max,
     });
   }
 
@@ -80,11 +97,15 @@ export default class CustomFormInput extends Component<Args> {
     if (this.args.field) {
       this.args.field.name = this.name;
       this.args.field.type = this.type;
+      this.args.field.min = this.min;
+      this.args.field.max = this.max;
       this.args.field.fieldIdentifier = this.identifier;
     } else {
       this.args.customForms.pushObject(this.field);
     }
     this.name = '';
+    this.min = 0;
+    this.max = 10;
 
     this.args.onSave && this.args.onSave();
   }
