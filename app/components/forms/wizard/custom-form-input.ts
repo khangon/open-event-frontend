@@ -71,9 +71,6 @@ export default class CustomFormInput extends Component<Args> {
 
   @computed('name', 'type')
   get field(): CustomForm {
-
-
-    console.log('========================>', this.args)
     return this.store.createRecord('custom-form', {
       fieldIdentifier : this.identifier,
       name            : this.name,
@@ -85,7 +82,7 @@ export default class CustomFormInput extends Component<Args> {
       event           : this.args.event,
       formID          : this.args.formIdentifier,
       min             : this.min,
-      max             : this.max,
+      max             : this.max
     });
   }
 

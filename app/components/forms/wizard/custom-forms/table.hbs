@@ -7,7 +7,7 @@
   <thead>
     {{#if @headerText}}
       <tr>
-        <th colspan="{{if this.editColumn '6' '4'}}" class="text center aligned">
+        <th colspan="{{if this.editColumn '5' '4'}}" class="text center aligned">
           {{@headerText}}
         </th>
       </tr>
@@ -63,9 +63,11 @@
           <td class="border center aligned">
             {{t-var field.type}}
           </td>
-          <td class="border center aligned">
-            {{if (eq field.type "number") (concat field.min " - " field.max) "-"}}
-          </td>
+          {{#if this.editColumn}}
+            <td class="border center aligned">
+              {{if (eq field.type "number") (concat field.min " - " field.max) "-"}}
+            </td>
+          {{/if}}  
           <td class="border center aligned">
             <UiCheckbox
               @class="slider"
