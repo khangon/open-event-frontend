@@ -4,7 +4,7 @@ import { action, computed } from '@ember/object';
 import { inject as service } from '@ember/service';
 import DS from 'ember-data';
 import { tracked } from '@glimmer/tracking';
-import { languageForms } from 'open-event-frontend/utils/dictionary/language-form';
+import { translateLanguages } from 'open-event-frontend/utils/dictionary/translate-language';
 import { A } from '@ember/array';
 
 interface CustomForm {
@@ -53,7 +53,7 @@ interface Args {
   form: string,
   event: any,
   formIdentifier: string | '',
-  mainLanguage: string | 'en-US',
+  mainLanguage: string | 'en',
   min: number | 0,
   max: number | 10,
   onSave: (() => void) | null
@@ -76,7 +76,7 @@ export default class CustomFormInput extends Component<Args> {
   max = 10;
 
   @tracked
-  mainLanguage = 'en-US'
+  mainLanguage = 'en'
 
   @tracked
   selectedLanguage:string[] = [this.mainLanguage]
@@ -102,7 +102,7 @@ export default class CustomFormInput extends Component<Args> {
           id,
           form_id,
           name,
-          languages       : languageForms,
+          languages       : translateLanguages,
           ignoreLanguages : this.selectedLanguage,
           selectedLang    : code || language_code,
           isDeleted
@@ -112,7 +112,7 @@ export default class CustomFormInput extends Component<Args> {
       this.name = '';
       this.min = 0;
       this.max = 10;
-      this.mainLanguage = 'en-US';
+      this.mainLanguage = 'en';
     }
   }
 
@@ -127,7 +127,7 @@ export default class CustomFormInput extends Component<Args> {
   }
 
   get languageList(): object[] {
-    return languageForms.filter(language =>
+    return translateLanguages.filter(language =>
       language.code === this.mainLanguage || !this.selectedLanguage.includes(language.code)
     )
   }
@@ -164,7 +164,7 @@ export default class CustomFormInput extends Component<Args> {
       min             : this.min,
       max             : this.max,
       translations    : this.translationsList,
-      mainLanguage    : this.mainLanguage || 'en-US'
+      mainLanguage    : this.mainLanguage || 'en'
     });
   }
 
@@ -189,7 +189,7 @@ export default class CustomFormInput extends Component<Args> {
     this.max = 10;
     this.subForm.clear();
     this.selectedLanguage.clear();
-    this.mainLanguage = 'en-US'
+    this.mainLanguage = 'en'
     this.selectedLanguage.pushObject(this.mainLanguage);
     this.args.onSave && this.args.onSave();
   }
@@ -198,7 +198,7 @@ export default class CustomFormInput extends Component<Args> {
   addTranslation():void {
     const obj: any = {
       name            : '',
-      languages       : languageForms,
+      languages       : translateLanguages,
       ignoreLanguages : this.selectedLanguage,
       selectedLang    : '',
       isDeleted       : false
@@ -229,7 +229,7 @@ export default class CustomFormInput extends Component<Args> {
 
   @computed('subForm.@each.isDeleted')
   get disableAddTranslation() {
-    return this.subForm.filter(item => !item.isDeleted).length === languageForms.length - 1;
+    return this.subForm.filter(item => !item.isDeleted).length === translateLanguages.length - 1;
   }
 
   @computed('subForm.@each.isDeleted')
