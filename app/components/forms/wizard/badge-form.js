@@ -6,12 +6,17 @@ import { sortBy, union } from 'lodash-es';
 import { badgeSize } from 'open-event-frontend/utils/dictionary/badge-image-size';
 import { htmlSafe } from '@ember/template';
 import tinycolor from 'tinycolor2';
+import { badgeCustomFields } from 'open-event-frontend/utils/dictionary/badge-custom-fields';
 
 export default Component.extend(FormMixin, EventWizardMixin, {
-  currentSelected: [],
-
+  currentSelected   : [],
+  badgeHeight       : [],
+  badgeLineHeight   : [],
+  ignoreCustomField : [],
+  isExpandedBadge   : true,
   init() {
     this._super(...arguments);
+    this.removeBadgeField = this.removeBadgeField.bind(this)
     this.currentSelected = this.data.ticketsDetails;
   },
 
@@ -25,6 +30,22 @@ export default Component.extend(FormMixin, EventWizardMixin, {
 
   badgeFields: computed('data.badgeFields.@each.isDeleted', function() {
     return this.data.badgeFields?.filter(field => !field.isDeleted);
+  }),
+
+  includeCustomField: computed('ignoreCustomField.@each', function() {
+    return badgeCustomFields.filter(item => !this.ignoreCustomField.includes(item.name));
+  }),
+
+  ticketNames: computed('data.ticketsDetails.@each', function() {
+    let ticketNames = '';
+    this.data.ticketsDetails.forEach(ticket => {
+      if (ticketNames) {
+        ticketNames += ', ' + ticket.name;
+      } else {
+        ticketNames = ticket.name;
+      }
+    });
+    return ticketNames.trim();
   }),
 
   selectChanges: observer('data.ticketsDetails', function() {
@@ -44,7 +65,6 @@ export default Component.extend(FormMixin, EventWizardMixin, {
       changed,
       formID: this.id
     });
-
   }),
 
   editableFields: computed('data.customForms.@each', function() {
@@ -63,8 +83,22 @@ export default Component.extend(FormMixin, EventWizardMixin, {
     return this.editableFields?.some(field => field.isComplex);
   }),
 
+  disableAddBadgeField: computed('data.badgeFields.@each.isDeleted', function() {
+    return this.data.badgeFields?.filter(field => !field.isDeleted).length === badgeCustomFields.length;
+  }),
+
   removeBadgeField(badgeField) {
     badgeField.isDeleted = true;
+    this.ignoreCustomField.removeObject(badgeField.customField);
+  },
+
+  onSelectedLanguage(old_code, new_code) {
+    if (old_code) {
+      this.ignoreCustomField.removeObject(old_code);
+    }
+    if (new_code) {
+      this.ignoreCustomField.pushObject(new_code);
+    }
   },
 
   getsampleData: computed('sampleData', function() {
@@ -75,13 +109,13 @@ export default Component.extend(FormMixin, EventWizardMixin, {
     };
   }),
 
-  getBadgeSize: computed('badgeSize', 'badgeOrientation', function() {
+  getBadgeSize: computed('data.badgeSize', 'data.badgeOrientation', function() {
     let height = 4;
     let lineHeight = 3;
-    if (this.badgeSize) {
-      [height, lineHeight] = [this.badgeSize.height, this.badgeSize.lineHeight];
+    if (this.data.badgeSize) {
+      [height, lineHeight] = [this.data.badgeSize.height, this.data.badgeSize.lineHeight];
     }
-    if (this.badgeOrientation === 'Landscape') {
+    if (this.data.badgeOrientation === 'Landscape') {
       [height, lineHeight] = [lineHeight, height];
     }
 
@@ -90,17 +124,26 @@ export default Component.extend(FormMixin, EventWizardMixin, {
       lineHeight };
   }),
 
-  getBadgeStyle: computed('badgeSize', 'badgeOrientation', 'badgeColor', function() {
-    const headerStyle = 'padding: 0; width: calc(' + this.getBadgeSize.lineHeight + 'in)';
-    const bodyStyle = 'color: #000000; background-size: cover; height: calc(' + this.getBadgeSize.height + 'in); background-color: ' + this.badgeColor + ';';
-    return {
-      headerStyle : htmlSafe(headerStyle),
-      bodyStyle   : htmlSafe(bodyStyle)
-    };
+  getBadgeColor: computed('data.badgeColor', function() {
+    return htmlSafe('background-color: ' + this.data.badgeColor);
   }),
 
-  // styleHelper: computed('data.badgeFields.@each.fontSize', 'data.badgeFields.@each.textAlignment', 'data.badgeFields.@each.textType', function() {
-  //   const fieldStyle = 'font-size : '  + '; overflow: hidden; word-wrap: break-word;';
+  getBadgeImg: computed('data.badgeImageURL', function() {
+    return htmlSafe('background-image: url(' + this.data.badgeImageURL + '); background-size: cover;');
+  }),
+
+  getQRCode: computed('data.badgeFields.@each.customField', 'data.badgeFields.@each.sampleText', 'data.badgeFields.@each.fontSize', 'data.badgeFields.@each.fontSize', 'data.badgeFields.@each.textAlignment', 'data.badgeFields.@each.isDeleted', function() {
+    const customeFieldToBeGen = [];
+    this.data.badgeFields.forEach(field => {
+      if (!field.isDeleted) {
+        customeFieldToBeGen.pushObject(field);
+      }
+    });
+    return customeFieldToBeGen;
+  }),
+
+  // getfieldStyle: computed('field', function() {
+  //   const fieldStyle = 'font-size : ' + field.fontSize + 'px; text-align: ' + field.textAlignment + '; text-transform: ' + field.textType + '; overflow: hidden; word-wrap: break-word; ';
   //   return htmlSafe(fieldStyle);
   // }),
 
@@ -108,26 +151,31 @@ export default Component.extend(FormMixin, EventWizardMixin, {
     removeField(field) {
       field.deleteRecord();
     },
-    addBadgeField() {
+    addBadgeField(badgeCustomFields = []) {
       this.data.badgeFields.pushObject(this.store.createRecord('badge-field-form', {
         badgeID   : this.data.badgeID,
-        isDeleted : false
+        isDeleted : false,
+        badgeCustomFields
       }));
     },
     mutateBadgeSize(value) {
       badgeSize.forEach(badge => {
-        if (badge.name === value) {this.set('badgeSize', badge)}
+        if (badge.name === value) {(this.data.badgeSize = badge)}
       });
-      this.data.badgeSize = this.badgeSize;
-    },
-    mutateBadgeOrientation(value) {
-      this.set('badgeOrientation', value);
-      this.data.badgeOrientation = value;
     },
     mutateBadgeColor(color) {
       const colorCode = tinycolor(color.target.value);
-      this.set('badgeColor', colorCode.toHexString());
-      this.data.badgeColor = this.badgeColor;
+      this.data.badgeColor = colorCode.toHexString();
+    },
+    onChildChangeCustomField(old_code, new_code) {
+      this.onSelectedLanguage(old_code, new_code);
+    },
+    toggleBadge() {
+      if (!this.isExpandedBadge) {
+        this.set('isExpandedBadge', true);
+      } else {
+        this.set('isExpandedBadge', false);
+      }
     }
   }
 });

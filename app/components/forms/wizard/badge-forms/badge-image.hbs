@@ -1,48 +1,33 @@
-<div class="ui basic segment">
-    <div class="bgImg ui raised segment"
-        style={{@headerStyle}}>
+<div class="bgImg ui raised segment header-section {{if @badgeHeight (concat 'h-' @badgeHeight)}} {{if @badgeWidth (concat 'w-' @badgeWidth)}}"
+    style={{badgeImgURL}}>
+    <div class="ui w-full h-full badge-body" style={{@bgColor}}>
+        <div class="sample-text">
+            {{#if showSampleData}}
+            <p class="f-4">
+                {{sampleData.name}}
+            </p>
+            <p class="f-2">
+                {{sampleData.organisation}}
+            </p>
+            <p class="f-6">
+                {{sampleData.position}}
+            </p>
 
-        <div style={{@bodyStyle}}>
-            <div class="preview content" style="padding-top: 20%">
-                {{#if showSampleData}}
-                <p style="
-                    font-size : 30px;
-                    text-align: center;
-                    text-transform: capitalize;
-                    ">
-                    {{sampleData.name}}
-                </p>
-                <p style="
-                    font-size : 20px;
-                    text-align: center;
-                    text-transform: capitalize;
-                    ">
-                    {{sampleData.organisation}}
-                </p>
-                <p style="
-                    font-size : 50px;
-                    text-align: center;
-                    text-transform: capitalize;
-                    ">
-                    {{sampleData.position}}
-                </p>
-
+            {{else}}
+            {{#each @fields as |_field|}}
+            {{#if (not _field.isDeleted)}}
+                {{#if (eq _field.customField 'QR')}}
+                    {{!-- {{@qrCode}} --}}
+                    {{!-- {{qr-code data="Hello world" light="#EEEEFF" dark="#330000"}} --}}
                 {{else}}
-                {{#each @fields as |_field|}}
-                {{#if (not _field.isDeleted)}}
-                <p style="
-                            font-size : {{_field.fontSize}}px;
-                            text-align: {{_field.textAlignment}};
-                            text-transform: {{_field.textType}};
-                            overflow: hidden;
-                            word-wrap: break-word;
-                            ">
+                <p class="field-style"
+                    style={{_field.getFieldStyle}}>
                     {{_field.sampleText}}
                 </p>
                 {{/if}}
-                {{/each}}
-                {{/if}}
-            </div>
+            {{/if}}
+            {{/each}}
+            {{/if}}
         </div>
     </div>
 </div>
